@@ -1,0 +1,123 @@
+{
+  "seed": 1,
+  "alpha": 0.3,
+  "beta": 0.7,
+  "cases": [
+    {
+      "case": "A_critical_attack",
+      "tx": "0x94359bd3f0fc4cd53b96054a23b05f531e127fa6cca644dfc870851af5e0e3dc",
+      "label": "malicious",
+      "dst_chain": 6648936,
+      "dst_token": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      "beneficiary": "0xa8ecaf8745c56d5935c232d2c5b83b9cd3de1f6a",
+      "amount": 202440725413,
+      "value_usd": 202427.4513746347,
+      "origin_observed": false,
+      "withdrawal_id": "4922",
+      "in_peckshield": false,
+      "ml": {
+        "anomaly_score": 0.9991400621961871,
+        "lambda_tau": "high_risk"
+      },
+      "datalog": {
+        "violations": [
+          "forged_withdrawal"
+        ],
+        "sigma_tau": 3,
+        "in_cctx_valid_withdrawal": false,
+        "explanation": [
+          "forged_withdrawal (\u03c3=3): no origin-side burn observation matching (withdrawal_id=4922, beneficiary=0xa8ecaf8745c56d5935c232d2c5b83b9cd3de1f6a, amount=202440725413) was found before dst_ts=1659394314."
+        ]
+      },
+      "layer4": {
+        "alpha": 0.3,
+        "beta": 0.7,
+        "risk_score": 0.9997420186588561,
+        "alert_tier": "critical"
+      },
+      "blackbox_reference": {
+        "GCN_score": 0.9999874830245972,
+        "GCN_decision": "high_risk",
+        "GraphSAGE_score": 0.9999935626983643,
+        "GraphSAGE_decision": "high_risk",
+        "note": "Black-box GNNs emit a numerical anomaly score with no per-alert rule explanation; B-Sentry's Layer 3 rule labels (above) are the structural answer to why a tier was assigned."
+      }
+    },
+    {
+      "case": "C_ml_only_false_positive",
+      "tx": "0xa975da348f6ce920892b14a50c08a70dfd0970ae063909f58500418dec0ee24c",
+      "label": "normal",
+      "dst_chain": 6648936,
+      "dst_token": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+      "beneficiary": "0xa8047cc795c10c64e71235b07c41f663e51c7196",
+      "amount": 122030000000000000,
+      "value_usd": 345.14038565195,
+      "origin_observed": true,
+      "withdrawal_id": "1996",
+      "in_peckshield": false,
+      "ml": {
+        "anomaly_score": 0.618784512310896,
+        "lambda_tau": "high_risk"
+      },
+      "datalog": {
+        "violations": [],
+        "sigma_tau": 0,
+        "in_cctx_valid_withdrawal": true,
+        "explanation": [
+          "(no Layer 3 rule fired \u2014 Datalog signal silent.)"
+        ]
+      },
+      "layer4": {
+        "alpha": 0.3,
+        "beta": 0.7,
+        "risk_score": 0.1856353536932688,
+        "alert_tier": "suspicious"
+      },
+      "blackbox_reference": {
+        "GCN_score": 3.766693043871783e-05,
+        "GCN_decision": "normal",
+        "GraphSAGE_score": 1.8860988348023966e-05,
+        "GraphSAGE_decision": "normal",
+        "note": "Black-box GNNs emit a numerical anomaly score with no per-alert rule explanation; B-Sentry's Layer 3 rule labels (above) are the structural answer to why a tier was assigned."
+      }
+    },
+    {
+      "case": "D_clean_normal",
+      "tx": "0x13dbd2fa803bdc7545518a3e4ef9b5770e859b821da31fd7a4beed4d78e2ed8a",
+      "label": "normal",
+      "dst_chain": 6648936,
+      "dst_token": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      "beneficiary": "0x05f51de33bd21abd4172634eddc78c8884212033",
+      "amount": 92000000000,
+      "value_usd": 91941.784148,
+      "origin_observed": true,
+      "withdrawal_id": "929",
+      "in_peckshield": false,
+      "ml": {
+        "anomaly_score": 0.005229520356598522,
+        "lambda_tau": "normal"
+      },
+      "datalog": {
+        "violations": [],
+        "sigma_tau": 0,
+        "in_cctx_valid_withdrawal": true,
+        "explanation": [
+          "(no Layer 3 rule fired \u2014 Datalog signal silent.)"
+        ]
+      },
+      "layer4": {
+        "alpha": 0.3,
+        "beta": 0.7,
+        "risk_score": 0.0015688561069795565,
+        "alert_tier": "normal"
+      },
+      "blackbox_reference": {
+        "GCN_score": 3.750695759663358e-05,
+        "GCN_decision": "normal",
+        "GraphSAGE_score": 2.04556363314623e-05,
+        "GraphSAGE_decision": "normal",
+        "note": "Black-box GNNs emit a numerical anomaly score with no per-alert rule explanation; B-Sentry's Layer 3 rule labels (above) are the structural answer to why a tier was assigned."
+      }
+    }
+  ]
+}

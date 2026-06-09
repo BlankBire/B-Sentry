@@ -1,0 +1,104 @@
+{
+  "rows": [
+    {
+      "profile": "workstation",
+      "threads": 8,
+      "layer": "L1",
+      "mean_ms": 0.15443333298511183,
+      "std_ms": 0.0006548958612759635,
+      "per_record_ms_mean": 0.00022156862695137995,
+      "iters": 3,
+      "n_test": 697
+    },
+    {
+      "profile": "workstation",
+      "threads": 8,
+      "layer": "L2",
+      "mean_ms": 3277.4197666670566,
+      "std_ms": 6.946048563639189,
+      "per_record_ms_mean": 4.70218043998143,
+      "iters": 3,
+      "n_test": 697
+    },
+    {
+      "profile": "workstation",
+      "threads": 8,
+      "layer": "L3",
+      "mean_ms": 96.33179999946151,
+      "std_ms": 2.7138843783932605,
+      "per_record_ms_mean": 0.13820918220869657,
+      "iters": 3,
+      "n_test": 697
+    },
+    {
+      "profile": "workstation",
+      "threads": 8,
+      "layer": "L4",
+      "mean_ms": 0.7615000007111424,
+      "std_ms": 0.016143316522558637,
+      "per_record_ms_mean": 0.0010925394558266033,
+      "iters": 3,
+      "n_test": 697
+    },
+    {
+      "profile": "workstation",
+      "threads": 8,
+      "layer": "total",
+      "mean_ms": 3374.667500000214,
+      "std_ms": 9.61626321284535,
+      "per_record_ms_mean": 4.841703730272904,
+      "iters": 3,
+      "n_test": 697
+    },
+    {
+      "profile": "commodity",
+      "threads": 1,
+      "layer": "L1",
+      "mean_ms": 0.15426666686835233,
+      "std_ms": 0.004786322655310058,
+      "per_record_ms_mean": 0.0002213295077020837,
+      "iters": 3,
+      "n_test": 697
+    },
+    {
+      "profile": "commodity",
+      "threads": 1,
+      "layer": "L2",
+      "mean_ms": 3218.0540333332224,
+      "std_ms": 35.77405382903707,
+      "per_record_ms_mean": 4.617007221424997,
+      "iters": 3,
+      "n_test": 697
+    },
+    {
+      "profile": "commodity",
+      "threads": 1,
+      "layer": "L3",
+      "mean_ms": 105.2373333338134,
+      "std_ms": 24.661866329277178,
+      "per_record_ms_mean": 0.15098613103846972,
+      "iters": 3,
+      "n_test": 697
+    },
+    {
+      "profile": "commodity",
+      "threads": 1,
+      "layer": "L4",
+      "mean_ms": 0.7955999996435518,
+      "std_ms": 0.0477121221564951,
+      "per_record_ms_mean": 0.001141463414122743,
+      "iters": 3,
+      "n_test": 697
+    },
+    {
+      "profile": "commodity",
+      "threads": 1,
+      "layer": "total",
+      "mean_ms": 3324.2412333335474,
+      "std_ms": 12.475124024534477,
+      "per_record_ms_mean": 4.769356145385291,
+      "iters": 3,
+      "n_test": 697
+    }
+  ]
+}
