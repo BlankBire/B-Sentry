@@ -1,0 +1,10 @@
+{
+  "dimensions": 128,
+  "wl_iterations": 2,
+  "attributed": true,
+  "min_count": 1,
+  "epochs": 50,
+  "learning_rate": 0.025,
+  "workers": 2,
+  "seed": 1
+}

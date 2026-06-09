@@ -1,0 +1,19 @@
+{
+  "params": {
+    "dimensions": 128,
+    "wl_iterations": 2,
+    "attributed": true,
+    "min_count": 1,
+    "epochs": 50,
+    "learning_rate": 0.025,
+    "workers": 2,
+    "seed": 1
+  },
+  "classifier_kind": "lr",
+  "n_train": 1216,
+  "n_val": 260,
+  "val_f1": 0.9006211180124224,
+  "val_auroc": 0.8856442720032675,
+  "val_ap": 0.9603276575657701,
+  "elapsed_sec": 0.7836329936981201
+}
