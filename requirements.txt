@@ -1,0 +1,11 @@
+requests
+networkx>=3.0
+karateclub==1.3.3
+gensim>=4.3,<5
+python-louvain
+pygsp
+scikit-learn>=1.3
+numpy>=1.24
+scipy
+tqdm
+matplotlib
