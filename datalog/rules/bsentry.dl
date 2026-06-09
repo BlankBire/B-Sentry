@@ -1,0 +1,151 @@
+// =============================================================================
+//  B-Sentry — Layer 3 (Datalog rules, Soufflé)   ←   paper §5.4 / Listing 1
+//
+//  Run:
+//      souffle -F datalog/facts -D datalog/out -j 4 datalog/rules/bsentry.dl
+//
+//  Inputs (`-F` directory):
+//      withdrawal_dst.facts       (wid, dst_tx, dst_ts, dst_chain, dst_token,
+//                                  beneficiary, amount, value_usd)
+//      withdrawal_orig.facts      (wid, orig_tx, orig_ts, orig_chain,
+//                                  orig_token, sender, amount)
+//                                 — emitted only for withdrawals whose
+//                                  origin-side burn was observed.
+//      deposit.facts              (orig_chain, orig_tx, orig_ts, orig_token,
+//                                  sender, dst_chain, dst_token, beneficiary,
+//                                  amount) — corpus of legitimate deposits
+//                                  used to *reconstruct* cross-chain matching.
+//      token_map.facts            (orig_chain, orig_token, dst_chain, dst_token)
+//                                 — token registry derived from TRAIN only.
+//      peckshield.facts           (addr) — attacker EOAs from PeckShield.
+//      ml_result.facts            (tx, score, decision) — Layer 2 output.
+//
+//  Outputs (csv into `-D` directory):
+//      logic_violation.csv        (tx, kind, severity)
+//      max_severity.csv           (tx, sigma)
+//      alert_critical.csv         (tx, kind)
+//      alert_suspicious.csv       (tx, reason)
+//      alert_normal.csv           (tx)
+//
+//  Severity tiers (paper §5.4):  3 = forged_withdrawal,
+//                                2 = forged_deposit | finality_breach,
+//                                1 = invalid_token_mapping.
+// =============================================================================
+
+.decl withdrawal_dst(wid:symbol, dst_tx:symbol, dst_ts:number,
+                     dst_chain:number, dst_token:symbol, beneficiary:symbol,
+                     amount:number, value_usd:float)
+.input withdrawal_dst(filename="withdrawal_dst.facts")
+
+// withdrawal_orig — origin-side burn observation. Column 6 is the
+// `beneficiary` (the dst-side recipient, the join key shared with
+// withdrawal_dst); column 8 is the origin-side `sender` (the burner), kept
+// for informational use.
+.decl withdrawal_orig(wid:symbol, orig_tx:symbol, orig_ts:number,
+                      orig_chain:number, orig_token:symbol,
+                      beneficiary:symbol, amount:number, sender:symbol)
+.input withdrawal_orig(filename="withdrawal_orig.facts")
+
+.decl deposit(orig_chain:number, orig_tx:symbol, orig_ts:number,
+              orig_token:symbol, sender:symbol,
+              dst_chain:number, dst_token:symbol, beneficiary:symbol,
+              amount:number)
+.input deposit(filename="deposit.facts")
+
+.decl token_map(orig_chain:number, orig_token:symbol,
+                dst_chain:number, dst_token:symbol)
+.input token_map(filename="token_map.facts")
+
+.decl peckshield(addr:symbol)
+.input peckshield(filename="peckshield.facts")
+
+.decl ml_score(tx:symbol, score:float, decision:symbol)
+.input ml_score(filename="ml_result.facts")
+
+// ---------- derived: cross-chain matching ------------------------------------
+
+// Strict match — paper §5.4 + XChainWatcher (Augusto et al., CCS 2024)
+// CCTX_Withdrawal rule: a destination-side withdrawal is valid iff an
+// origin-side burn observation with the same `(withdrawal_id, beneficiary,
+// amount)` exists and was observed strictly before the dst claim. The
+// bridge convention is that the dst-side beneficiary equals the origin-side
+// sender for self-bridging, which is the standard pattern in Nomad. Joining
+// on the beneficiary key — not just `(wid, amount)` — is what filters out
+// Nomad-style replays: the attacker's beneficiary differs from the original
+// user's, so the join naturally rejects the forged dst claims.
+//
+// We do NOT match against `deposit.facts` — deposits belong to the
+// lock-mint flow, not the burn-release flow that withdrawals are part of,
+// so cross-matching the two would conflate distinct bridge operations.
+.decl cctx_valid_withdrawal(wid:symbol, dst_tx:symbol)
+.output cctx_valid_withdrawal
+cctx_valid_withdrawal(WID, DST_TX) :-
+    withdrawal_dst(WID, DST_TX, DST_TS, _, _, BENEF, AMT, _),
+    withdrawal_orig(WID, _, ORIG_TS, _, _, BENEF, AMT, _),
+    ORIG_TS < DST_TS.
+
+// ---------- violation rules (paper Listing 1) --------------------------------
+
+.decl logic_violation(dst_tx:symbol, kind:symbol, severity:number)
+.output logic_violation
+
+// R1 — forged_withdrawal  (sigma = 3): a destination-side claim with no
+//      matching origin-side proof.
+logic_violation(DST_TX, "forged_withdrawal", 3) :-
+    withdrawal_dst(WID, DST_TX, _, _, _, _, _, _),
+    !cctx_valid_withdrawal(WID, DST_TX).
+
+// R2 — invalid_token_mapping  (sigma = 1): origin-side observation exists
+//      but the (orig_token, dst_token) pair is not in the training registry.
+logic_violation(DST_TX, "invalid_token_mapping", 1) :-
+    withdrawal_dst(WID, DST_TX, _, DCID, DTOK, _, _, _),
+    withdrawal_orig(WID, _, _, OCID, OTOK, _, _, _),
+    !token_map(OCID, OTOK, DCID, DTOK).
+
+// R3 — peckshield_listed  (sigma = 2): beneficiary on the PeckShield
+//      attacker-EOA list (we map this to the `forged_deposit` severity
+//      bucket of paper §5.4 for tier integration).
+logic_violation(DST_TX, "peckshield_listed", 2) :-
+    withdrawal_dst(_, DST_TX, _, _, _, BENEF, _, _),
+    peckshield(BENEF).
+
+// ---------- per-tx maximum severity (sigma_tau) ------------------------------
+
+.decl max_severity(dst_tx:symbol, sigma:number)
+.output max_severity
+max_severity(TX, S) :-
+    S = max V : { logic_violation(TX, _, V) }.
+
+// ---------- hybrid ML × Datalog alert tiers (paper §5.5) --------------------
+
+// Conjunctive critical (Lemma 1): high_risk  AND  sigma >= 2.
+.decl alert_critical(tx:symbol, kind:symbol)
+.output alert_critical
+alert_critical(TX, K) :-
+    ml_score(TX, _, "high_risk"),
+    logic_violation(TX, K, V), V >= 2.
+
+// Strict suspicious: exactly one strong signal active.
+.decl alert_suspicious(tx:symbol, reason:symbol)
+.output alert_suspicious
+alert_suspicious(TX, "ml_only") :-
+    ml_score(TX, _, "high_risk"),
+    max_severity(TX, V), V < 2.
+alert_suspicious(TX, "ml_only") :-
+    ml_score(TX, _, "high_risk"),
+    !max_severity(TX, _).
+alert_suspicious(TX, "logic_only") :-
+    max_severity(TX, V), V >= 2,
+    ml_score(TX, _, D), D != "high_risk".
+alert_suspicious(TX, "logic_only") :-
+    max_severity(TX, V), V >= 2,
+    !ml_score(TX, _, _).
+
+.decl alert_normal(tx:symbol)
+.output alert_normal
+alert_normal(TX) :-
+    ml_score(TX, _, D), D != "high_risk",
+    !max_severity(TX, _).
+alert_normal(TX) :-
+    ml_score(TX, _, D), D != "high_risk",
+    max_severity(TX, V), V < 2.
